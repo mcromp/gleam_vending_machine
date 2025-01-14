@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+
+<body>
+  <script type="module">
+    import { init, update } from "/build/dev/javascript/vending_machine_gleam/vending_machine_gleam.mjs"
+
+    init()
+    document.getElementById("update").addEventListener("click", update)
+  </script>
+
+  <button id="update">update</button>
+
+</body>
+
+</html>
