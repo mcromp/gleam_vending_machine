@@ -9,12 +9,23 @@
 
 <body>
   <script type="module">
-    import { init, update } from "/build/dev/javascript/vending_machine_gleam/vending_machine_gleam.mjs"
+    import { init, update } from "./build/dev/javascript/vending_machine_gleam/vending_machine_gleam.mjs"
 
-    init()
-    document.getElementById("update").addEventListener("click", update)
+    const updateView = (text) => {
+      document.getElementById("text").innerText = text
+    }
+
+    let data = init()
+    updateView(data.display)
+
+    document.getElementById("update").addEventListener("click", () => {
+      data = update(data)
+      updateView(data.display)
+    })
+
   </script>
 
+  <h1 id="text"></h1>
   <button id="update">update</button>
 
 </body>
