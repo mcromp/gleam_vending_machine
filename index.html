@@ -10,17 +10,19 @@
 <body>
   <script type="module">
     import { init, update } from "./build/dev/javascript/vending_machine_gleam/vending_machine_gleam.mjs"
+    import ACTIONS from "./ACTIONS.json"
 
-    const updateView = (text) => {
+    const updateDisplay = (text) => {
       document.getElementById("text").innerText = text
     }
 
     let data = init()
-    updateView(data.display)
+    initSelect(data.items)
+    updateDisplay(data.display)
 
     document.getElementById("update").addEventListener("click", () => {
       data = update(data)
-      updateView(data.display)
+      updateDisplay(data.display)
     })
 
   </script>
