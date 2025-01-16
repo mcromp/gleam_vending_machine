@@ -1,32 +1,73 @@
-import gleam/io
 import gleeunit
 import gleeunit/should
-import vending_machine_gleam.{Machine, init, user_event_handler}
+import vending_machine_gleam.{Item, Machine, init, user_event_handler}
 
 pub fn main() {
   gleeunit.main()
 }
 
-pub fn user_event_handler_input_money_test() {
-  // should take multiple inputs
+pub fn input_money_happy_path_test() {
   init()
   |> user_event_handler("1/100")
   |> user_event_handler("1/150")
-  |> should.equal(Machine(..init(), payment: 250))
-  // should not take non integer strings
-  // init()
-  // |> user_event_handler("1/woo")
-  // |> should.equal(Machine(..init(), display: "Invalid Money Input"))
+  |> should.equal(Machine(..init(), payment: 250, display: "Balance: 250"))
 }
-// pub fn user_event_handler_select_item_test() {
-//   // should give back item and change if valid payment and drink available
-//   init()
-//   |> user_event_handler("1/100")
-//   |> user_event_handler("1/150")
-//   |> should.equal(Machine(..init(), payment: 250))
 
-//   // should not take non integer strings
-//   init()
-//   |> user_event_handler("0/woo")
-//   |> should.equal(Machine(..init(), display: "Invalid Money Input"))
-// }
+pub fn input_money_rejects_bad_money_input_test() {
+  init()
+  |> user_event_handler("1/ten")
+  |> should.equal(Machine(..init(), display: "Invalid Money Input"))
+}
+
+pub fn money_return_test() {
+  init()
+  |> user_event_handler("2/")
+  |> should.equal(Machine(..init(), display: "0 returned"))
+}
+
+pub fn item_select_with_money_test() {
+  let test_item = Item(cost: 200, name: "test_item", stock: 1)
+  let inital_machine = init()
+  let expected =
+    Machine(
+      ..init(),
+      display: "Here is a test_item. Your change is 100",
+      items: [Item(..test_item, stock: 0)],
+    )
+
+  Machine(..inital_machine, items: [test_item])
+  |> user_event_handler("1/100")
+  |> user_event_handler("1/200")
+  |> user_event_handler("0/test_item")
+  |> should.equal(expected)
+}
+
+pub fn item_select_with_not_enough_money_test() {
+  let test_item = Item(cost: 301, name: "test_item", stock: 1)
+  let inital_machine = init()
+  let expected =
+    Machine(..init(), payment: 300, display: "You require 1 more", items: [
+      test_item,
+    ])
+
+  Machine(..inital_machine, items: [test_item])
+  |> user_event_handler("1/100")
+  |> user_event_handler("1/200")
+  |> user_event_handler("0/test_item")
+  |> should.equal(expected)
+}
+
+pub fn item_select_out_of_stock_test() {
+  let test_item = Item(cost: 300, name: "test_item", stock: 0)
+  let inital_machine = init()
+  let expected =
+    Machine(..init(), payment: 300, display: "Item out of stock", items: [
+      test_item,
+    ])
+
+  Machine(..inital_machine, items: [test_item])
+  |> user_event_handler("1/100")
+  |> user_event_handler("1/200")
+  |> user_event_handler("0/test_item")
+  |> should.equal(expected)
+}

@@ -1,107 +1,103 @@
-import gleam/dynamic/decode
 import gleam/int
-import gleam/io
-import gleam/json
-import gleam/result
-
-// import gleam/json
-// import gleam/option.{type Option, None, Some}
-
-// import gleam/result
+import gleam/list
 import gleam/string
-import simplifile
-
-// import gleam/io
 
 type Money =
   Int
 
-pub type MachineState {
-  ItemSelectedAwaitingMoney
-  MoneyInputedAwaitingItemSelection
-  AwaitingItemAndMoney
-}
-
-pub type ItemType {
-  OrangeSoda
-  CherrySoda
-  IceTea
-}
-
 pub type Item {
-  Item(cost: Money, name: String)
+  Item(cost: Money, name: String, stock: Int)
 }
 
 pub type Machine {
-  Machine(
-    state: MachineState,
-    bank: Money,
-    payment: Money,
-    display: String,
-    items: List(Item),
-  )
+  Machine(bank: Money, payment: Money, display: String, items: List(Item))
 }
 
 pub fn init() -> Machine {
-  Machine(
-    state: AwaitingItemAndMoney,
-    bank: 0,
-    payment: 0,
-    display: "start",
-    items: [Item(cost: 150, name: "Orange Soda")],
-  )
+  Machine(bank: 0, payment: 0, display: "Awaiting input...", items: [
+    Item(cost: 150, name: "Orange Soda", stock: 10),
+  ])
 }
 
-// type Events {
-//   Coin(money: Money)
-//   Card
-//   SelectItem(Item)
-// }
-type Actions {
-  Actions(select_item: String, input_money: String, scan_card: String)
+pub type UserEvent {
+  SelectItem
+  InputMoney
+  MoneyReturn
 }
 
-fn fetch_actions() -> Actions {
-  let filepath = "./ACTIONS.json"
-
-  let action_decoder = {
-    use select_item <- decode.field("SELECT_ITEM", decode.string)
-    use input_money <- decode.field("INPUT_MONEY", decode.string)
-    use scan_card <- decode.field("INPUT_MONEY", decode.string)
-    decode.success(Actions(select_item:, input_money:, scan_card:))
+pub fn parse_user_event(e: String) -> Result(#(UserEvent, String), String) {
+  case string.split_once(e, on: "/") {
+    Ok(#(code, opt)) ->
+      case code {
+        "0" -> Ok(#(SelectItem, opt))
+        "1" -> Ok(#(InputMoney, opt))
+        "2" -> Ok(#(MoneyReturn, opt))
+        _ -> Error("Unrecognized User Event")
+      }
+    Error(_) -> Error("User Event Failed to Parse")
   }
+}
 
-  let assert Ok(json) = simplifile.read(filepath)
-  let assert Ok(result) = json.parse(json, action_decoder)
-  io.debug("##")
-  io.debug(result)
-  io.debug("##")
-  result
+pub fn handle_item_selection(ctx: Machine, item: Item) {
+  case item.stock > 0, ctx.payment > item.cost {
+    False, _ -> Machine(..ctx, display: "Item out of stock")
+    _, False ->
+      Machine(
+        ..ctx,
+        display: "You require "
+          <> item.cost - ctx.payment |> int.to_string
+          <> " more",
+      )
+    True, True -> {
+      let change = ctx.payment - item.cost |> int.to_string
+      Machine(
+        ..ctx,
+        items: ctx.items
+          |> list.map(fn(x) {
+            case x.name == item.name {
+              False -> x
+              True -> Item(..x, stock: x.stock - 1)
+            }
+          }),
+        display: "Here is a " <> item.name <> ". Your change is " <> change,
+        payment: 0,
+      )
+    }
+  }
 }
 
 pub fn user_event_handler(ctx: Machine, e: String) -> Machine {
-  let q = fetch_actions()
-  let assert Ok(#(code, opt)) = string.split_once(e, on: "/")
-  io.debug("$$$$$,  " <> q.input_money)
-
-  case code {
-    select_item -> {
-      case int.parse(opt) {
-        Error(_) -> Machine(..ctx, display: "Invalid Item Selection")
-        Ok(money_amt) -> {
-          Machine(..ctx, payment: ctx.payment + money_amt)
+  case parse_user_event(e) {
+    Error(m) -> Machine(..ctx, display: m)
+    Ok(#(e, opt)) -> {
+      case e {
+        SelectItem -> {
+          case ctx.items |> list.find(fn(x) { x.name == opt }) {
+            Error(_) -> Machine(..ctx, display: "Item not found")
+            Ok(item) -> handle_item_selection(ctx, item)
+          }
+        }
+        InputMoney -> {
+          case int.parse(opt) {
+            Error(_) -> Machine(..ctx, display: "Invalid Money Input")
+            Ok(money_amt) -> {
+              Machine(
+                ..ctx,
+                payment: ctx.payment + money_amt,
+                display: "Balance: " <> ctx.payment + money_amt |> int.to_string,
+              )
+            }
+          }
+        }
+        MoneyReturn -> {
+          Machine(
+            ..ctx,
+            payment: 0,
+            display: ctx.payment |> int.to_string <> " returned",
+          )
         }
       }
     }
-    input_money -> {
-      case int.parse(opt) {
-        Error(_) -> Machine(..ctx, display: "Invalid Money Input")
-        Ok(money_amt) -> {
-          Machine(..ctx, payment: ctx.payment + money_amt)
-        }
-      }
-    }
-    _ -> panic as "Scores should never be negative!"
   }
 }
 

@@ -21,3 +21,5 @@
 
 
 <!--  switch cases weren't working -->
+you really need to play ball with the type system, 
+the simplicity is a bit shocking, the
