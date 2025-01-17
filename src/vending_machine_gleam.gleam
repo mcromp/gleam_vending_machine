@@ -1,4 +1,6 @@
 import gleam/int
+import gleam/result
+
 import gleam/list
 import gleam/string
 
@@ -9,18 +11,18 @@ pub type Item {
   Item(cost: Money, name: String, stock: Int)
 }
 
+pub type UserEvent {
+  SelectItem
+  InputMoney
+  MoneyReturn
+}
+
 pub type Machine {
   Machine(bank: Money, payment: Money, display: String, items: List(Item))
 }
 
 pub fn init() -> Machine {
   Machine(bank: 0, payment: 0, display: handle_display(Inital), items: [])
-}
-
-pub type UserEvent {
-  SelectItem
-  InputMoney
-  MoneyReturn
 }
 
 type DisplayStatus {
@@ -50,15 +52,15 @@ fn handle_display(s: DisplayStatus) -> String {
 }
 
 pub fn parse_user_event(e: String) -> Result(#(UserEvent, String), String) {
-  case string.split_once(e, on: "/") {
-    Ok(#(code, opt)) ->
-      case code {
-        "0" -> Ok(#(SelectItem, opt))
-        "1" -> Ok(#(InputMoney, opt))
-        "2" -> Ok(#(MoneyReturn, opt))
-        _ -> Error("Unrecognized User Event")
-      }
-    Error(_) -> Error("User Event Failed to Parse")
+  let #(code, opt) =
+    e
+    |> string.split_once(on: "/")
+    |> result.unwrap(#("", ""))
+  case code {
+    "0" -> Ok(#(SelectItem, opt))
+    "1" -> Ok(#(InputMoney, opt))
+    "2" -> Ok(#(MoneyReturn, opt))
+    _ -> Error("Unrecognized User Event")
   }
 }
 
