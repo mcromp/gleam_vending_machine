@@ -22,7 +22,12 @@ pub type Machine {
 }
 
 pub fn init() -> Machine {
-  Machine(bank: 0, payment: 0, display: handle_display(Inital), items: [])
+  Machine(bank: 0, payment: 0, display: handle_display(Inital), items: [
+    Item(cost: 150, name: "tea", stock: 10),
+    Item(cost: 100, name: "orange soda", stock: 3),
+    Item(cost: 200, name: "purple soda", stock: 20),
+    Item(cost: 250, name: "water", stock: 10),
+  ])
 }
 
 type DisplayStatus {
