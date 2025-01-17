@@ -53,9 +53,15 @@
   </style>
   <script defer type="module">
     import { init, update } from "./build/dev/javascript/vending_machine_gleam/vending_machine_gleam.mjs"
-    const ACTIONS = await fetch("./ACTIONS.json")
-      .then(res => res.json())
-      .then(data => data)
+    // disable because of CORS issues
+    // const ACTIONS = await fetch("./ACTIONS.json")
+    //   .then(res => res.json())
+    //   .then(data => data)
+    const ACTIONS = {
+      "SELECT_ITEM": "0/",
+      "INPUT_MONEY": "1/",
+      "MONEY_RETURN": "2/"
+    }
 
     // items are linked list
     //   type LL_Node = {
