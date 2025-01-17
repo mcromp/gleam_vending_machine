@@ -65,7 +65,7 @@ pub fn parse_user_event(e: String) -> Result(#(UserEvent, String), String) {
 }
 
 pub fn handle_item_selection(ctx: Machine, item: Item) {
-  case item.stock > 0, ctx.payment > item.cost {
+  case item.stock > 0, ctx.payment >= item.cost {
     False, _ -> Machine(..ctx, display: handle_display(ItemOutOfStock))
     _, False -> {
       let amount = item.cost - ctx.payment
