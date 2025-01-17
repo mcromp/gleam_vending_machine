@@ -1,6 +1,6 @@
 import gleeunit
 import gleeunit/should
-import vending_machine_gleam.{Item, Machine, init, user_event_handler}
+import vending_machine_gleam.{Item, Machine, init, update}
 
 pub fn main() {
   gleeunit.main()
@@ -8,20 +8,20 @@ pub fn main() {
 
 pub fn input_money_happy_path_test() {
   init()
-  |> user_event_handler("1/100")
-  |> user_event_handler("1/150")
-  |> should.equal(Machine(..init(), payment: 250, display: "Balance: 250"))
+  |> update("1/100")
+  |> update("1/150")
+  |> should.equal(Machine(..init(), payment: 250, display: "Total : 250"))
 }
 
 pub fn input_money_rejects_bad_money_input_test() {
   init()
-  |> user_event_handler("1/ten")
+  |> update("1/ten")
   |> should.equal(Machine(..init(), display: "Invalid Money Input"))
 }
 
 pub fn money_return_test() {
   init()
-  |> user_event_handler("2/")
+  |> update("2/")
   |> should.equal(Machine(..init(), display: "0 returned"))
 }
 
@@ -36,9 +36,9 @@ pub fn item_select_with_money_test() {
     )
 
   Machine(..inital_machine, items: [test_item])
-  |> user_event_handler("1/100")
-  |> user_event_handler("1/200")
-  |> user_event_handler("0/test_item")
+  |> update("1/100")
+  |> update("1/200")
+  |> update("0/test_item")
   |> should.equal(expected)
 }
 
@@ -51,9 +51,9 @@ pub fn item_select_with_not_enough_money_test() {
     ])
 
   Machine(..inital_machine, items: [test_item])
-  |> user_event_handler("1/100")
-  |> user_event_handler("1/200")
-  |> user_event_handler("0/test_item")
+  |> update("1/100")
+  |> update("1/200")
+  |> update("0/test_item")
   |> should.equal(expected)
 }
 
@@ -61,13 +61,16 @@ pub fn item_select_out_of_stock_test() {
   let test_item = Item(cost: 300, name: "test_item", stock: 0)
   let inital_machine = init()
   let expected =
-    Machine(..init(), payment: 300, display: "Item out of stock", items: [
-      test_item,
-    ])
+    Machine(
+      ..init(),
+      payment: 300,
+      display: "Selected item out of stock",
+      items: [test_item],
+    )
 
   Machine(..inital_machine, items: [test_item])
-  |> user_event_handler("1/100")
-  |> user_event_handler("1/200")
-  |> user_event_handler("0/test_item")
+  |> update("1/100")
+  |> update("1/200")
+  |> update("0/test_item")
   |> should.equal(expected)
 }
