@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+
+<body>
+  <style>
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      font-family: ui-sans-serif, system-ui, sans-serif;
+      background-color: #ecd8e6;
+    }
+
+    h1 {
+      font-family: cursive;
+    }
+
+    #item_input {
+      &>button {
+        font-size: 18px;
+        font-family: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
+      }
+    }
+
+    #display {
+      font-size: 2rem;
+    }
+
+    code {
+      font-size: 13px;
+    }
+
+    button {
+      padding: 1rem;
+      margin: 0.3rem;
+    }
+
+    .flex-row {
+      display: flex;
+      align-items: center;
+    }
+
+    .flex-col {
+      display: flex;
+      flex-direction: column;
+    }
+  </style>
+  <script defer type="module">
+    import { init, update } from "./build/dev/javascript/vending_machine_gleam/vending_machine_gleam.mjs"
+    // disable because of CORS issues
+    // const ACTIONS = await fetch("./ACTIONS.json")
+    //   .then(res => res.json())
+    //   .then(data => data)
+    const ACTIONS = {
+      "SELECT_ITEM": "0/",
+      "INPUT_MONEY": "1/",
+      "MONEY_RETURN": "2/"
+    }
+
+    // items are linked list
+    //   type LL_Node = {
+    //     head: Object
+    //     tail: LL_Node or {}
+    //   }
+    Object.prototype.foreach_ll = function (fn) {
+      let current = this
+      while (current?.head) {
+        fn(current.head)
+        current = current.tail
+      }
+    }
+
+    const updateDisplay = (text) => {
+      document.getElementById("display").innerText = text
+    }
+    const updateStock = (items, name) => {
+      items.foreach_ll((item) => {
+        document.getElementById(item.name).innerText = `${item.name} | price: ${item.cost} | remaining: ${item.stock}`
+      })
+    }
+    // state
+    let _data = init()
+
+    //  create money input
+    for (const [k, v] of Object.entries({ 100: "One Dollar", 25: "Quater", 50: "Half Dollar" })) {
+      const button = document.createElement("button")
+      button.onclick = () => {
+        const e = ACTIONS.INPUT_MONEY + k
+        _data = update(_data, e)
+        updateDisplay(_data.display)
+      }
+      button.innerText = "Insert " + v
+      document.getElementById("money_input").append(button)
+    }
+
+    // create money return button
+    const return_btn = document.getElementById("money_return")
+    return_btn.onclick = () => {
+      _data = update(_data, ACTIONS.MONEY_RETURN)
+      updateDisplay(_data.display)
+    }
+
+
+
+    // display vending machine item inventory
+    _data.items.foreach_ll(item => {
+      const { name, cost, stock } = item
+      //  create inventory display
+      const stock_item = document.createElement("p")
+      stock_item.innerText = `${name} | price: ${cost} | remaining: ${stock}`
+      stock_item.id = name
+      document.getElementById("inventory").append(stock_item)
+
+      // create input button
+      const btn = document.createElement("button")
+      btn.innerText = name.toLocaleLowerCase().replace("_", " ")
+      btn.onclick = () => {
+        _data = update(_data, ACTIONS.SELECT_ITEM + name)
+        updateDisplay(_data.display)
+        updateStock(_data.items, name)
+      }
+      document.getElementById("item_input").append(btn)
+    })
+
+
+
+    updateDisplay(_data.display)
+  </script>
+  <h1>Gleam Vending Machine</h1>
+  <div class="flex-row">
+    <pre>
+    <code>
+    ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+    ⠀⠀⠀⠀⠀⠀⣿⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⣿⡿⠿⢿⣿⠀⠀⠀⠀⠀⠀
+    ⠀⠀⠀⠀⠀⠀⣿⠀⠀⢠⣤⠀⠀⣴⠀⠀⠀⠀⠀⣿⠀⣶⠀⣿⠀⠀⠀⠀⠀⠀
+    ⠀⠀⠀⠀⠀⠀⣿⠀⠰⠾⠿⠶⠾⠿⠶⠶⠶⠶⠀⣿⣀⣉⣀⣿⠀⠀⠀⠀⠀⠀
+    ⠀⠀⠀⠀⠀⠀⣿⠀⠀⠀⠀⠀⠀⠀⢀⣤⡀⠀⠀⣿⣏⣉⣹⣿⠀⠀⠀⠀⠀⠀
+    ⠀⠀⠀⠀⠀⠀⣿⠀⠐⠒⠒⠒⠒⠒⠚⠛⠓⠒⠀⣿⣯⣉⣹⣿⠀⠀⠀⠀⠀⠀
+    ⠀⠀⠀⠀⠀⠀⣿⠀⠀⢠⡀⠀⣾⠀⠀⣶⡆⠀⠀⣿⣿⣿⣿⣿⠀⠀⠀⠀⠀⠀
+    ⠀⠀⠀⠀⠀⠀⣿⠀⠘⠛⠛⠛⠛⠛⠛⠛⠛⠛⠀⣿⣿⣿⣿⣿⠀⠀⠀⠀⠀⠀
+    ⠀⠀⠀⠀⠀⠀⣿⠀⠀⣶⣦⠀⣶⣶⠀⠀⠀⠀⠀⣿⣿⣿⣿⣿⠀⠀⠀⠀⠀⠀
+    ⠀⠀⠀⠀⠀⠀⣿⠀⠈⠉⠉⠉⠉⠉⠉⠉⠉⠉⠀⣿⣿⣿⣿⣿⠀⠀⠀⠀⠀⠀
+    ⠀⠀⠀⠀⠀⠀⣿⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣿⣏⣉⣹⣿⠀⠀⠀⠀⠀⠀
+    ⠀⠀⠀⠀⠀⠀⣿⠶⠶⠶⠶⠶⠶⠶⠶⠶⠶⠶⠶⣿⣿⣿⣿⣿⠀⠀⠀⠀⠀⠀
+    ⠀⠀⠀⠀⠀⠀⣿⠀⣤⣤⣤⣤⣤⣤⣤⣤⣤⣤⡄⣿⣿⣿⣿⣿⠀⠀⠀⠀⠀⠀
+    ⠀⠀⠀⠀⠀⠀⣿⣤⣤⣤⣤⣤⣤⣤⣤⣤⣤⣤⣤⣿⣿⣿⣿⣿
+  </code>
+  </pre>
+    <code>
+    <div id="inventory"></div>
+    </code>
+  </div>
+  <p id="display"></p>
+  <div id="wrapper">
+    <div id="item_input"></div>
+    <div id="money_input" class="flex-col"> </div>
+  </div>
+  <button id="money_return">Return Money</button>
+
+</body>
+
+</html>
