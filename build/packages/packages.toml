@@ -1,0 +1,6 @@
+[packages]
+gleam_stdlib = "0.52.0"
+filepath = "1.1.0"
+gleeunit = "1.2.0"
+gleam_json = "2.3.0"
+simplifile = "2.2.0"
